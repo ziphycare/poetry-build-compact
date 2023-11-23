@@ -83,6 +83,7 @@ class BaseReplaceCommand(Command):
             return None
 
         self.poetry.locker.set_local_config(poetry_content)
+        assert isinstance(content, TOMLDocument)
         return content
 
     def is_replaceable_dependency(self, name: str) -> bool:
@@ -119,7 +120,7 @@ class BaseReplaceCommand(Command):
         installed_version = "!"
         for package in self.poetry.locker.locked_repository().packages:
             if package.name == dependency.name:
-                installed_version = package.version
+                installed_version = package.pretty_version
 
         self.line(
             "  <fg=green;options=bold>•</> "
@@ -243,6 +244,7 @@ class BuildCompactCommand(BaseReplaceCommand):
         self.compact_name = f"{self.poetry.package.name}{self.suffix}"
         self.compact_dist_name = self.compact_name.replace("-", "_")
 
+        assert self.poetry.package.root_dir
         self.dist_dir = self.poetry.package.root_dir / "dist"
         self.tmp_dir = self.dist_dir / "tmp"
         self.meta_dir = self.tmp_dir / f"{self.compact_dist_name}.dist-info"
@@ -273,6 +275,7 @@ class BuildCompactCommand(BaseReplaceCommand):
         if self.tmp_dir.exists():
             rmdir(self.tmp_dir)
 
+        assert self.poetry.package.root_dir
         remove_cache(self.poetry.package.root_dir)
 
     def compile(self) -> None:

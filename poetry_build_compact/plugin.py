@@ -31,19 +31,19 @@ class BaseReplaceCommand(Command):
     options = [
         option(
             "replace",
-            "Replace these packages dependencies by compiled ones.",
+            description="Replace these packages dependencies by compiled ones.",
             flag=False,
             multiple=True,
         ),
         option(
             "prefix",
-            "Replace packages dependencies starting from this prefix by compiled ones.",
+            description="Replace packages dependencies starting from this prefix by compiled ones.",
             flag=False,
             multiple=True,
         ),
         option(
             "suffix",
-            "Suffix of compiled packages.",
+            description="Suffix of compiled packages.",
             flag=False,
             default="-compact",
         ),
@@ -196,7 +196,7 @@ class ReplaceCommand(BaseReplaceCommand, InstallerCommand):
             self.line("")
             self.poetry.file.write(poetry_content)
 
-            return self.call("install", f"--sync --only={MAIN_GROUP}")
+            return self.call("install", f"--sync --all-extras --only={MAIN_GROUP}")
         return 0
 
     def install(self, lock: bool = False) -> bool:
@@ -207,7 +207,7 @@ class ReplaceCommand(BaseReplaceCommand, InstallerCommand):
         self.installer.execute_operations(not lock)
         self.installer.requires_synchronization(not lock)
         self.installer.only_groups([MAIN_GROUP])
-        # optional install extras should be set here
+        self.installer.extras(list(self.poetry.package.extras))
 
         return self.installer.run() == 0
 
@@ -217,9 +217,9 @@ class BuildCompactCommand(BaseReplaceCommand):
     description = "Compile package into bytecode wheel"
     options = [
         option(
-            "no-optimize",
-            "Do not optimize generated files (leave asserts and docstrings).",
-            flag=True,
+            "optimize",
+            "-o",
+            description="Optimize bytecode files (remove asserts and docstrings).",
         ),
     ] + BaseReplaceCommand.options
 
@@ -240,6 +240,8 @@ class BuildCompactCommand(BaseReplaceCommand):
 
     def prepare(self) -> None:
         super().prepare()
+
+        self.optimize = self.option("optimize")
 
         self.compact_name = f"{self.poetry.package.name}{self.suffix}"
         self.compact_dist_name = self.compact_name.replace("-", "_")
@@ -264,7 +266,8 @@ class BuildCompactCommand(BaseReplaceCommand):
         self.wheel_file()
         self.record_file()
 
-        wheel = f"{self.compact_dist_name}-{self.python_tag}-none-any"
+        version = self.poetry.package.version
+        wheel = f"{self.compact_dist_name}-{version}-{self.python_tag}-none-any"
         result = make_archive(str(self.dist_dir / wheel), "zip", self.tmp_dir)
         result_path = self.dist_dir / (wheel + ".whl")
         (self.dist_dir / result).rename(result_path)
@@ -282,7 +285,7 @@ class BuildCompactCommand(BaseReplaceCommand):
         compile_dir(
             str(self.poetry.package.root_dir),
             ddir=f"<{self.compact_dist_name}>",
-            optimize=2,
+            optimize=2 if self.optimize else 0,
             quiet=1,
         )
 
@@ -332,7 +335,7 @@ Requires-Python: =={sys.version_info.major}.{sys.version_info.minor}
             key=lambda d: d.name,
         )
         for dependency in dependencies:
-            content += f"Requires-Dist: {dependency.base_pep_508_name})\n"
+            content += f"Requires-Dist: {dependency.base_pep_508_name}\n"
 
         content_bytes = content.encode()
 

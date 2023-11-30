@@ -64,15 +64,19 @@ class BaseReplaceCommand(Command):
         return replaced
 
     def hard_replace(self) -> TOMLDocument | None:
-        self.line(f"<info>Replacing dependencies in {self.poetry.package.name}</>")
-
         content: dict[str, t.Any] = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
         if "dependencies" not in poetry_content:
             return None
-
         section = poetry_content["dependencies"]
+
+        python_constraint = f"~{sys.version_info.major}.{sys.version_info.minor}"
+        self.line(f"<info>Fix Python version to {python_constraint}</>")
+        self.poetry.package.python_versions = python_constraint
+        section["python"] = python_constraint
+
+        self.line(f"<info>Replacing dependencies in {self.poetry.package.name}</>")
 
         dependencies_group = self.poetry.package.dependency_group(MAIN_GROUP)
         for dependency in dependencies_group.dependencies:
@@ -240,6 +244,7 @@ class BuildCompactCommand(BaseReplaceCommand):
 
     def prepare(self) -> None:
         super().prepare()
+        version = self.poetry.package.version.to_string()
 
         self.optimize = self.option("optimize")
 
@@ -249,7 +254,7 @@ class BuildCompactCommand(BaseReplaceCommand):
         assert self.poetry.package.root_dir
         self.dist_dir = self.poetry.package.root_dir / "dist"
         self.tmp_dir = self.dist_dir / "tmp"
-        self.meta_dir = self.tmp_dir / f"{self.compact_dist_name}.dist-info"
+        self.meta_dir = self.tmp_dir / f"{self.compact_dist_name}-{version}.dist-info"
 
         self.records: list[str] = []
         self.python_tag = f"py{sys.version_info.major}{sys.version_info.minor}"
@@ -266,7 +271,7 @@ class BuildCompactCommand(BaseReplaceCommand):
         self.wheel_file()
         self.record_file()
 
-        version = self.poetry.package.version
+        version = self.poetry.package.version.to_string()
         wheel = f"{self.compact_dist_name}-{version}-{self.python_tag}-none-any"
         result = make_archive(str(self.dist_dir / wheel), "zip", self.tmp_dir)
         result_path = self.dist_dir / (wheel + ".whl")
@@ -310,13 +315,15 @@ Tag: {self.python_tag}-none-any
         self.records.append(record_line(self.tmp_dir, wheel_file, content))
 
     def metadata_file(self) -> None:
+        this_python = f"{sys.version_info.major}.{sys.version_info.minor}"
+        next_python = f"{sys.version_info.major}.{sys.version_info.minor + 1}"
         content = f"""\
 Metadata-Version: 2.1
 Name: {self.compact_name}
 Version: {self.poetry.package.version}
 Summary: {self.poetry.package.description}
 License: Proprietary
-Requires-Python: =={sys.version_info.major}.{sys.version_info.minor}
+Requires-Python: >={this_python},<{next_python}
 """
         if self.poetry.package.author_name:
             content += f"Author: {self.poetry.package.author_name}\n"

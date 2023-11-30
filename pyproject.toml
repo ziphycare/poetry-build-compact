@@ -1,28 +1,17 @@
 [tool.poetry]
 name = "poetry-build-compact"
-version = "1.0.0rc6"
+version = "1.0.0rc7"
 description = "Poetry plugin providing command to compile package into bytecode one"
-authors = ["Maria Murmantseva <mariam@ziphycare.com>"]
+authors = ["ZiphyCare LLC <support@ziphycare.com>"]
 packages = [{include = "poetry_build_compact"}]
-
-[[tool.poetry.source]]
-name = "ziphy"
-url = "https://ziphy-435048198819.d.codeartifact.us-east-1.amazonaws.com/pypi/ziphy/simple/"
-priority = "supplemental"
+license = "LGPL-3.0-only"
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.12"
+python = "^3.7"
 poetry = "^1.5.0"
 
 [tool.poetry.plugins."poetry.application.plugin"]
 build-compact = "poetry_build_compact.plugin:BuildCompactPlugin"
-
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-ziphy-pychecks = {version = "^2.1.0", source = "ziphy", python = ">=3.10"}
-
 
 [build-system]
 requires = ["poetry-core"]

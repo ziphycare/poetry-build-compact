@@ -4,7 +4,7 @@ run-name: Publish
 on:
    push:
       branches:
-         - upd-pipeline
+         - main
 
 jobs:
   pypi-publish:

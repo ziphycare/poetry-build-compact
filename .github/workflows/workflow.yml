@@ -19,7 +19,6 @@ jobs:
       - name: Checkout repo & prepearing
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.gh-pat }}
 
       - name: Setup Python
         uses: actions/setup-python@v4

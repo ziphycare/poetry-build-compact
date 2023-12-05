@@ -16,6 +16,24 @@ jobs:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     steps:
+      - name: Checkout repo & prepearing
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.gh-pat }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: pyproject.toml
+
+      - uses: snok/install-poetry@v1.3.4
+        with:
+          version: latest
+
+      - name: Build package
+        run: |
+          poetry build 
+
       # retrieve your distributions here
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

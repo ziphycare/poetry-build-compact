@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "poetry-build-compact"
-version = "1.0.0"
+version = "1.0.1"
 description = "Poetry plugin providing command to compile package into bytecode one"
 authors = ["ZiphyCare LLC <support@ziphycare.com>"]
 packages = [{include = "poetry_build_compact"}]
 license = "LGPL-3.0-only"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.7"

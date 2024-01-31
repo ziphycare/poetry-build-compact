@@ -103,8 +103,15 @@ class BaseReplaceCommand(Command):
         group: DependencyGroup,
         toml_section: dict[str, t.Any] | None = None,
     ) -> None:
+        installed_version = "!"
+        for package in self.poetry.locker.locked_repository().packages:
+            if package.name == dependency.name:
+                installed_version = package.pretty_version
+
         constraint: dict[str, t.Any] = inline_table()
-        constraint["version"] = dependency.pretty_constraint
+        constraint["version"] = (
+            installed_version if toml_section else dependency.pretty_constraint
+        )
         if dependency.allows_prereleases():
             constraint["allow-prereleases"] = True
         if dependency.source_name:
@@ -120,11 +127,6 @@ class BaseReplaceCommand(Command):
             groups=[MAIN_GROUP],
             root_dir=self.poetry.file.path.parent,
         )
-
-        installed_version = "!"
-        for package in self.poetry.locker.locked_repository().packages:
-            if package.name == dependency.name:
-                installed_version = package.pretty_version
 
         self.line(
             "  <fg=green;options=bold>•</> "

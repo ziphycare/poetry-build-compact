@@ -208,7 +208,11 @@ class ReplaceCommand(BaseReplaceCommand, InstallerCommand):
             self.line("")
             self.poetry.file.write(poetry_content)
 
-            return self.call("install", f"--sync --all-extras --only={MAIN_GROUP}")
+            command = f"--all-extras --only={MAIN_GROUP}"
+            if self.poetry.config.get("virtualenvs.create"):
+                command = f"--sync {command}"
+
+            return self.call("install", command)
         return 0
 
     def install(self, lock: bool = False) -> bool:

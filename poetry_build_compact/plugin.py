@@ -10,6 +10,7 @@ from shutil import make_archive
 from cleo.helpers import option
 from poetry.console.commands.command import Command
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.console.commands.env_command import EnvCommand
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.factory import Factory
@@ -27,7 +28,7 @@ class BuildCompactPlugin(ApplicationPlugin):
         return [BuildCompactCommand, ReplaceCommand]
 
 
-class BaseReplaceCommand(Command):
+class BaseReplaceCommand(EnvCommand):
     options = [
         option(
             "replace",
@@ -48,6 +49,10 @@ class BaseReplaceCommand(Command):
             default="-compact",
         ),
     ]
+
+    def python_version(self) -> tuple[str, str]:
+        version_info = self.env.get_version_info()
+        return version_info[:2]
 
     def soft_replace(self) -> bool:
         self.line(
@@ -71,7 +76,8 @@ class BaseReplaceCommand(Command):
             return None
         section = poetry_content["dependencies"]
 
-        python_constraint = f"~{sys.version_info.major}.{sys.version_info.minor}"
+        major, minor = self.python_version()
+        python_constraint = f"~{major}.{minor}"
         self.line(f"<info>Fix Python version to {python_constraint}</>")
         self.poetry.package.python_versions = python_constraint
         section["python"] = python_constraint
@@ -259,7 +265,9 @@ class BuildCompactCommand(BaseReplaceCommand):
         self.meta_dir = self.tmp_dir / f"{self.compact_dist_name}-{version}.dist-info"
 
         self.records: list[str] = []
-        self.python_tag = f"py{sys.version_info.major}{sys.version_info.minor}"
+
+        major, minor = self.python_version()
+        self.python_tag = f"py{major}{minor}"
 
         self.clear()
 
@@ -317,8 +325,10 @@ Tag: {self.python_tag}-none-any
         self.records.append(record_line(self.tmp_dir, wheel_file, content))
 
     def metadata_file(self) -> None:
-        this_python = f"{sys.version_info.major}.{sys.version_info.minor}"
-        next_python = f"{sys.version_info.major}.{sys.version_info.minor + 1}"
+        major, minor = self.python_version()
+        this_python = f"{major}.{minor}"
+        next_python = f"{major}.{int(minor) + 1}"
+
         content = f"""\
 Metadata-Version: 2.1
 Name: {self.compact_name}

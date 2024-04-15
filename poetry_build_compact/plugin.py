@@ -358,7 +358,7 @@ Requires-Python: >={this_python},<{next_python}
             key=lambda d: d.name,
         )
         for dependency in dependencies:
-            content += f"Requires-Dist: {dependency.base_pep_508_name}\n"
+            content += f"Requires-Dist: {dependency.to_pep_508()}\n"
 
         content_bytes = content.encode()
 

@@ -12,4 +12,6 @@ ones of the exactly same version as currently installed original package. The
 `pyproject.toml` and `poetry.lock` as well as virtual environment are updated.
 
 ## Changelog
+* 1.2.1: sync dependencies only in virtual environments
+* 1.2.0: use project virtual env Python version instead of Poetry one, keep dependencies markers in compact packages
 * 1.1.0: `replace` command now uses installed versions exactly instead of original versions constraint

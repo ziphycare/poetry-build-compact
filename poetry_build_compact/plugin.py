@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 import typing as t
 from compileall import compile_dir
 from hashlib import sha256
@@ -9,8 +8,8 @@ from shutil import make_archive
 
 from cleo.helpers import option
 from poetry.console.commands.command import Command
-from poetry.console.commands.installer_command import InstallerCommand
 from poetry.console.commands.env_command import EnvCommand
+from poetry.console.commands.installer_command import InstallerCommand
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.factory import Factory
@@ -209,7 +208,7 @@ class ReplaceCommand(BaseReplaceCommand, InstallerCommand):
             self.poetry.file.write(poetry_content)
 
             command = f"--all-extras --only={MAIN_GROUP}"
-            if self.poetry.config.get("virtualenvs.create"):
+            if self.env.is_venv():
                 command = f"--sync {command}"
 
             return self.call("install", command)
@@ -221,7 +220,7 @@ class ReplaceCommand(BaseReplaceCommand, InstallerCommand):
         self.installer.verbose(self.io.is_verbose())
         self.installer.update(False)
         self.installer.execute_operations(not lock)
-        self.installer.requires_synchronization(not lock)
+        self.installer.requires_synchronization(not lock and self.env.is_venv())
         self.installer.only_groups([MAIN_GROUP])
         self.installer.extras(list(self.poetry.package.extras))
 
